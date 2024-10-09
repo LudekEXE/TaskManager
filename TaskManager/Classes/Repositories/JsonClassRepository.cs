@@ -1,0 +1,63 @@
+﻿using Newtonsoft.Json;
+using Formatting = Newtonsoft.Json.Formatting;
+
+namespace taskMeneger;
+
+public class JsonClassRepository : ITaskRespository
+{
+    private readonly string filePath = "NotesData.json";
+
+
+    public async Task CreateTask(TaskInfo task)
+    {
+        var tasks = GetAll();
+        var nextID = tasks.Count + 1;
+        task.Id = nextID; 
+        tasks.Add(task);
+        SaveTask(tasks);
+    }
+
+    public Task DeleteTaskAsync(TaskInfo task)
+    {
+        throw new NotImplementedException();
+    }
+
+    public List<TaskInfo> GetAll()
+    {
+        if (!File.Exists(filePath))
+        {
+            return new List<TaskInfo>();
+        }
+
+        var jsonData = File.ReadAllText(filePath);
+        return Newtonsoft.Json.JsonConvert.DeserializeObject<List<TaskInfo>>(jsonData) ?? new List<TaskInfo>();
+    }
+
+    public async Task<TaskInfo?> GetById(int id)
+    {
+        var tasks = GetAll();
+        var task = tasks.FirstOrDefault(task => task.Id == id);
+        return  await Task.FromResult(task);
+    }
+
+    public void SaveTask(List<TaskInfo> tasks)
+    {
+        var jsonData = JsonConvert.SerializeObject(tasks, Formatting.Indented);
+        File.WriteAllText(filePath, jsonData);
+    }
+
+    public Task UpdateTaskAsync(TaskInfo task)
+    {
+        var tasks = GetAll();
+        var excistingTask = tasks.FirstOrDefault(t => t.Id == task.Id);
+        if (excistingTask != null)
+        { 
+            SaveTask(tasks);
+        }
+        else
+        {
+            throw new Exception("zadanie nie znlezione");
+        }
+        return Task.CompletedTask;
+    }
+}
